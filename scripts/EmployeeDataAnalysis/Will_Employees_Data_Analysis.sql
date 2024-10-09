@@ -32,3 +32,39 @@ select e1.employee_id, e1.employee_name,
 		end as manager_name
 from "Employee".wills_employees e1 left join "Employee".wills_employees e2
 on e1.manager_id = e2.employee_id
+
+--Query to get max, min and average salary
+
+select designation, count(1) as num_of_team_mem, max(salary) as max_salary, min(salary) as min_salary, cast(avg(salary)as int)  as avg_salary
+from "Employee".wills_employees
+group by designation;
+
+--Query to get the salary difference from previous employee in table ordered by designation and salary
+
+with employee_salary as (
+select employee_name, designation, salary
+from "Employee".wills_employees
+order by designation, salary asc),
+
+salary_com as (
+select employee_name, designation, salary, lag(salary) over() as prev_emp_salary
+	from employee_salary)
+
+select employee_name, designation, salary, salary-prev_emp_salary as salary_difference
+from salary_com;
+
+--Query to get the salary difference from previous employee of same designation in table ordered by designation and salary
+
+with employee_salary as (
+    select employee_name, designation, salary
+    from "Employee".wills_employees
+    order by designation, salary asc
+),
+salary_com as (
+    select employee_name, designation, salary,
+           lag(salary) over (partition by designation order by salary) as prev_emp_salary,
+           salary - lag(salary) over (partition by designation order by salary) as salary_difference
+    from employee_salary
+)
+select employee_name, designation, salary, salary_difference
+from salary_com;
